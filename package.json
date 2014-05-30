@@ -1,0 +1,16 @@
+{
+  "name": "requiesco",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ssh2": "^0.2.25",
+    "mysql": "^2.3.2",
+    "tunnel-ssh": "0.0.4"
+  }
+}
