@@ -3,7 +3,6 @@ var mysql = require('mysql');
 
 var config = {
     remotePort: 3306, 
-    localPort: 8182, 
     verbose: true, // dump information to stdout
     sshConfig: {
       host: 'mileschristi.org',
@@ -14,15 +13,19 @@ var config = {
 };
 
 var tunnel = new Tunnel(config);
-tunnel.connect(function (error) {
-    console.log(error);
+tunnel.connect(function (error, port) {
+    if (error) {
+      console.log(error);
+    }
+
+    console.log(port);
 
     var connection = mysql.createConnection({
       host     : '127.0.0.1',
       database : 'mcwebadmin',
       user     : 'mcwebadmin',
       password : 'manresa1556',
-      port     : config.localPort,
+      port     : port,
       insecureAuth: true
     });
 
@@ -32,12 +35,18 @@ tunnel.connect(function (error) {
         return;
       }
     });
-    
-    connection.query('SELECT 1 + 1 AS solution', function(err, rows) {
+
+    connection.query('SELECT * FROM `breakfast-registrations`', function(err, rows) {
       if (err) throw err;
-      console.log('The solution is: ', rows[0].solution);
+      rows.forEach(function(row) {
+        console.log(row.fname);
+      });
+    connection.end(function() {
+      console.log('ended mysql');
+    });
+    console.log(this.server);
+      tunnel.close();
     });
     
-    connection.end(tunnel.close);
 
 });
