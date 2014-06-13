@@ -5,15 +5,24 @@ requirejs.config({
     nodeRequire: require,
     paths: {
         app: 'app',
-        users: 'models/user',
+        user: 'models/user',
         index: 'api/index',
+        users: 'api/users',
         databases: 'api/databases'
     }
 });
 
-requirejs(['app', 'index', 'databases'], function(app, index, databases) {
+requirejs(['app', 'index', 'users', 'databases'], function(app, index, users, databases) {
     
+  app.use(function(req, res, next) {
+    if (req.user) {
+      res.cookie('user', JSON.stringify(req.user));
+    }
+    next();
+  });
+
   app.use(index);
+  app.use(users);
   app.use(databases);
 
   app.use(function(err, req, res, next) {

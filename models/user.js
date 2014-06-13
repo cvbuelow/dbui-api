@@ -1,4 +1,4 @@
-define(function(mongoose, bcrypt) {
+define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
 
   var userSchema = new mongoose.Schema({
     email: {
@@ -10,11 +10,17 @@ define(function(mongoose, bcrypt) {
 
   userSchema.pre('save', function(next) {
     var user = this;
-    if (!user.isModified('password')) return next();
+    if (!user.isModified('password')) {
+      return next();
+    }
     bcrypt.genSalt(10, function(err, salt) {
-      if (err) return next(err);
+      if (err) {
+        return next(err);
+      }
       bcrypt.hash(user.password, salt, function(err, hash) {
-        if (err) return next(err);
+        if (err) {
+          return next(err);
+        }
         user.password = hash;
         next();
       });
@@ -23,7 +29,9 @@ define(function(mongoose, bcrypt) {
 
   userSchema.methods.comparePassword = function(candidatePassword, cb) {
     bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
-      if (err) return cb(err);
+      if (err) {
+        return cb(err);
+      }
       cb(null, isMatch);
     });
   };
