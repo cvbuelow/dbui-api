@@ -1,13 +1,13 @@
-var express = require('express');
-var router = express.Router();
+define(['express'], function(express) {
+  var app = express();
 
-/* GET databases listing. */
-router.get('/', function(req, res) {
-  var db = req.db;
-  var databases = db.get('databases');
-  res.send({
-    databases: databases
+  /* GET databases listing. */
+  app.get('/databases', function(req, res, next) {
+    var databases = {};
+    res.send({
+      databases: databases
+    });
   });
-});
 
-module.exports = router;
+  return app;
+});

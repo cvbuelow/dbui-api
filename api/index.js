@@ -1,9 +1,11 @@
-var express = require('express');
-var router = express.Router();
+define(['express'], function(express) {
 
-/* GET home page. */
-router.get('/', function(req, res) {
-  res.send('dbui api');
+  var app = express();
+
+  /* GET home page. */
+  app.get('/', function(req, res, next) {
+    res.send('dbui api');
+  });
+
+  return app;
 });
-
-module.exports = router;
