@@ -43,6 +43,15 @@ define(['express', 'express-session', 'morgan', 'cookie-parser', 'body-parser', 
       });
     }));
 
+    /*app.use(function(req, res, next) {
+      console.log(req.route);
+      if(/^\/((?!login).)*$/.test(req.route.path)) {
+        return expressJwt({secret: 'secret'})(req, res, next);
+      }
+      next();
+    });*/
+
+    // I don't think this is being used anymore...
     function ensureAuthenticated(req, res, next) {
       if (req.isAuthenticated()) {
         next();

@@ -12,14 +12,9 @@ requirejs.config({
     }
 });
 
-requirejs(['app', 'index', 'users', 'databases'], function(app, index, users, databases) {
-    
-  app.use(function(req, res, next) {
-    if (req.user) {
-      res.cookie('user', JSON.stringify(req.user));
-    }
-    next();
-  });
+requirejs(['app', 'express-jwt', 'index', 'users', 'databases'], function(app, expressJwt, index, users, databases) {
+  
+  app.use('/databases', expressJwt({secret: 'secret'}));
 
   app.use(index);
   app.use(users);

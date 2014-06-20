@@ -5,4 +5,4 @@ brew install mongodb
 mongod --dbpath ./db
 
 # start server
-npm start
+node start
