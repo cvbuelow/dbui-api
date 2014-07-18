@@ -1,15 +1,17 @@
 var requirejs = require('requirejs');
 
 requirejs.config({
-    baseUrl: __dirname,
-    nodeRequire: require,
-    paths: {
-        app: 'app',
-        user: 'models/user',
-        index: 'api/index',
-        users: 'api/users',
-        databases: 'api/databases'
-    }
+  baseUrl: __dirname,
+  nodeRequire: require,
+  paths: {
+    app: 'app',
+    user: 'models/user',
+    role: 'models/role',
+    database: 'models/database',
+    index: 'api/index',
+    users: 'api/users',
+    databases: 'api/databases'
+  }
 });
 
 requirejs(['app', 'express-jwt', 'index', 'users', 'databases'], function(app, expressJwt, index, users, databases) {

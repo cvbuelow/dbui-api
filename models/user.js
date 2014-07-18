@@ -1,14 +1,20 @@
 define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
 
-  var userSchema = new mongoose.Schema({
+  var Schema = mongoose.Schema;
+  var User = new Schema({
     email: {
       type: String,
-      unique: true
+      unique: true,
+      required: true
     },
-    password: String
+    password: {
+      type: String,
+      required: true
+    },
+    roles: [{ type: Schema.Types.ObjectId, ref: 'Role' }]
   });
 
-  userSchema.pre('save', function(next) {
+  User.pre('save', function(next) {
     var user = this;
     if (!user.isModified('password')) {
       return next();
@@ -27,7 +33,7 @@ define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
     });
   });
 
-  userSchema.methods.comparePassword = function(candidatePassword, cb) {
+  User.methods.comparePassword = function(candidatePassword, cb) {
     bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
       if (err) {
         return cb(err);
@@ -36,7 +42,5 @@ define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
     });
   };
 
-  var User = mongoose.model('User', userSchema);
-
-  return User;
+  return mongoose.model('User', User);
 });
