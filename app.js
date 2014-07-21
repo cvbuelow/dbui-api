@@ -2,6 +2,7 @@ define(['express', 'express-session', 'morgan', 'cookie-parser', 'body-parser', 
   function(express, session, logger, cookieParser, bodyParser, mongoose, passport, passportLocal, cors, User) {
     
     mongoose.connect('mongodb://localhost/dbui');
+    // TODO: Handle connection failure
 
     var app = express();
 
