@@ -1,4 +1,4 @@
-define(['express', 'database', 'role'], function(express, Database, Role) {
+define(['express', 'database', 'role', 'user'], function(express, Database, Role, User) {
   var app = express();
 
   /* GET databases listing. */
@@ -10,6 +10,19 @@ define(['express', 'database', 'role'], function(express, Database, Role) {
         return next(err);
       }
       res.send(databases);
+    });
+  });
+
+  /* GET single database. */
+  app.get('/databases/:id', function(req, res, next) {
+    // Only return databases that user owns or has a role for
+    // TODO: add or condition to check user roles
+    var id = req.params.id;
+    Database.findOne({owner: req.user._id, _id: id}, function(err, database) {
+      if (err) {
+        return next(err);
+      }
+      res.send(database);
     });
   });
 
@@ -30,8 +43,9 @@ define(['express', 'database', 'role'], function(express, Database, Role) {
           return next(err);
         }
         // Give owner 'admin' role
-        req.user.roles.push(adminRole);
-        req.user.save(function(err) {
+        var user = new User(req.user);
+        user.roles.push(adminRole);
+        user.save(function(err) {
           if (err) {
             return next(err);
           }
