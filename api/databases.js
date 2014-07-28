@@ -5,12 +5,10 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
   app.get('/databases', function(req, res, next) {
     // Only return databases that user owns or has a role for
     // TODO: add or condition to check user roles
-    Database.find({owner: req.user._id}, function(err, databases) {
-      if (err) {
-        return next(err);
-      }
-      res.send(databases);
-    });
+    Database.find({owner: req.user._id}).exec()
+      .then(function(databases) {
+        res.send(databases);
+      }, next);
   });
 
   /* GET single database. */
@@ -18,12 +16,10 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
     // Only return databases that user owns or has a role for
     // TODO: add or condition to check user roles
     var id = req.params.id;
-    Database.findOne({owner: req.user._id, _id: id}, function(err, database) {
-      if (err) {
-        return next(err);
-      }
-      res.send(database);
-    });
+    Database.findOne({owner: req.user._id, _id: id}).exec()
+      .then(function(database) {
+        res.send(database);
+      }, next);
   });
 
   app.post('/databases', function(req, res, next) {
