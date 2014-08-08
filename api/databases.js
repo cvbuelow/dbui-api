@@ -13,6 +13,15 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
     }, next);
   });
 
+  /* Test Database */
+  app.post('/databases/test', function(req, res, next) {
+    
+    var db = new Database(req.body);
+    db.test();
+    res.send(200);
+    
+  });
+
   /* Create Database */
   app.post('/databases', function(req, res, next) {
     
@@ -28,7 +37,7 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
           owner.roles.push(adminRole);
           owner.save(function(err) {
             if (err) { next(err); }
-            res.send(201);
+            res.send(201, { id: adminRole.database });
           });
         });
     };
@@ -59,8 +68,8 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
     // TODO: check user access
     var id = req.params.id;
     Database.findByIdAndUpdate(id, req.body).exec()
-      .then(function() {
-        res.send(200);
+      .then(function(result) {
+        res.send(200, result);
       }, next);
   });
 
