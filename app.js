@@ -30,9 +30,7 @@ define(['express', 'express-session', 'morgan', 'cookie-parser', 'body-parser', 
     });
 
     passport.deserializeUser(function(id, done) {
-      User.findById(id, function(err, user) {
-        done(err, user);
-      });
+      User.findById(id, done);
     });
 
     passport.use(new LocalStrategy({ usernameField: 'email' }, function(email, password, done) {

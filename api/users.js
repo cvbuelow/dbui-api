@@ -7,8 +7,7 @@ define(['express', 'passport', 'jsonwebtoken', 'user'], function(express, passpo
     var token = jwt.sign(req.user, 'secret', { expiresInMinutes: 60*5 });
     res.send({
       token: token,
-      email: req.user.email,
-      roles: req.user.roles
+      email: req.user.email
     });
   });
 

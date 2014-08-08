@@ -42,5 +42,26 @@ define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
     });
   };
 
-  return mongoose.model('User', User);
+  var model = mongoose.model('User', User);
+
+  model.getDatabaseAccessQuery = function(user, type) {
+    
+    var roles = { path: 'roles' };
+    if (type) {
+      roles.match = { name: type };
+    }
+
+    return model.findById(user._id, 'roles').populate(roles).exec()
+      .then(function(u) {
+        return { $or: [
+          { owner: u._id }, 
+          { _id: { $in: u.roles.map(function(role) {
+              return role.database;
+            })}
+          }
+        ]};
+      });
+  };
+
+  return model;
 });

@@ -4,11 +4,13 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
   /* GET databases listing */
   app.get('/databases', function(req, res, next) {
     // Only return databases that user owns or has a role for
-    // TODO: add or condition to check user roles
-    Database.find({owner: req.user._id}).exec()
-      .then(function(databases) {
-        res.send(databases);
-      }, next);
+    User.getDatabaseAccessQuery(req.user).then(function(hasAccess) {
+      return Database.find(hasAccess).exec()
+        .then(function(databases) {
+          // Attach role info to each database
+          res.send(databases);
+        });
+    }, next);
   });
 
   /* Create Database */
@@ -26,7 +28,7 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
           owner.roles.push(adminRole);
           owner.save(function(err) {
             if (err) { next(err); }
-            res.send(201, {id: adminRole.database, user: owner});
+            res.send(201);
           });
         });
     };
@@ -44,10 +46,12 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
     // Only return databases that user owns or has a role for
     // TODO: add or condition to check user roles
     var id = req.params.id;
-    Database.findOne({owner: req.user._id, _id: id}).exec()
-      .then(function(database) {
-        res.send(database);
-      }, next);
+    User.getDatabaseAccessQuery(req.user, 'admin').then(function(hasAccess) {
+      return Database.findOne({ $and: [{ _id: id }, hasAccess]}).exec()
+        .then(function(database) {
+          res.send(database);
+        });
+    }, next);
   });
 
   /* Update Database */
