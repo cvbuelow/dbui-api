@@ -17,8 +17,7 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
   app.post('/databases/test', function(req, res, next) {
     
     var db = new Database(req.body);
-    db.test().then(function(test) {
-      console.log('test:', test);
+    db.connect().done(function() {
       res.send(200);
     }, next);
     

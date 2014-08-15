@@ -21,7 +21,41 @@ define(['mongoose', 'tunnel-ssh', 'mysql', 'q'], function(mongoose, Tunnel, mysq
   });
 
   Database.methods.test = function() {
-    return Database.methods.query('SHOW TABLES');
+    return this.query('SHOW TABLES');
+  };
+
+  Database.methods.connect = function() {
+
+    var db = this;
+
+    var tunnel = new Tunnel({
+      remotePort: db.port,
+      verbose: true, // dump information to stdout
+      sshConfig: {
+        host: db.sshHost,
+        port: db.sshPort,
+        username: db.sshUser,
+        password: db.sshPass
+      }
+    });
+
+    var connectToMySQL = function (address) {
+
+      var connection = mysql.createConnection({
+        host: db.hostname,
+        database: db.name,
+        user: db.username,
+        password: db.password,
+        port: address.port,
+        insecureAuth: true
+      });
+
+      return q.nfcall(connection.connect);
+    };
+
+    return tunnel.connect()
+      .then(connectToMySQL)
+      .finally(tunnel.close);
   };
   
   Database.methods.query = function(sql) {
@@ -36,15 +70,12 @@ define(['mongoose', 'tunnel-ssh', 'mysql', 'q'], function(mongoose, Tunnel, mysq
         host: db.sshHost,
         port: db.sshPort,
         username: db.sshUser,
-        password: db.sshPass,
-        readyTimeout: 99999,
-        debug: console.log
+        password: db.sshPass
       }
     });
 
-    console.log('connecting...');
     tunnel.connect(function (address) {
-      console.log('connected');
+
       var connection = mysql.createConnection({
         host: db.hostname,
         database: db.name,
@@ -55,24 +86,23 @@ define(['mongoose', 'tunnel-ssh', 'mysql', 'q'], function(mongoose, Tunnel, mysq
       });
 
       connection.connect(function(err) {
+        console.log('err', err);
         if (err) {
-          defer.reject('error connecting: ' + err.stack);
+          tunnel.close();
+          defer.reject(err);
+        } else {
+          connection.query(sql, function(err, rows) {
+            if (err) defer.reject(err);
+
+            connection.end(function(err) {
+              console.log('ended mysql', err);
+            });
+            tunnel.close();
+            defer.resolve(rows);
+          });
         }
       });
 
-      connection.query(sql, function(err, rows) {
-        if (err) defer.reject(err);
-        /*rows.forEach(function(row) {
-          console.log(row.fname);
-        });*/
-        connection.end(function() {
-          console.log('ended mysql');
-        });
-        tunnel.close(function(error) {
-          console.log('close tunnel error:', error);
-        });
-        defer.resolve(rows);
-      });
 
     });
 
