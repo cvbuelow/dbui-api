@@ -20,8 +20,9 @@
     "mysql": "^2.3.2",
     "passport": "^0.2.0",
     "passport-local": "^1.0.0",
+    "q": "^1.0.1",
     "requirejs": "^2.1.14",
     "ssh2": "^0.2.25",
-    "tunnel-ssh": "0.0.4"
+    "tunnel-ssh": "git://github.com/cvbuelow/tunnel-ssh.git"
   }
 }

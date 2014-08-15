@@ -1,4 +1,4 @@
-define(['mongoose', 'tunnel-ssh', 'mysql'], function(mongoose, Tunnel, mysql) {
+define(['mongoose', 'tunnel-ssh', 'mysql', 'q'], function(mongoose, Tunnel, mysql, q) {
 
   var Schema = mongoose.Schema;
   var Database = new Schema({
@@ -21,6 +21,11 @@ define(['mongoose', 'tunnel-ssh', 'mysql'], function(mongoose, Tunnel, mysql) {
   });
 
   Database.methods.test = function() {
+    return Database.methods.query('SHOW TABLES');
+  };
+  
+  Database.methods.query = function(sql) {
+    var defer = q.defer();
 
     var db = this;
 
@@ -31,46 +36,47 @@ define(['mongoose', 'tunnel-ssh', 'mysql'], function(mongoose, Tunnel, mysql) {
         host: db.sshHost,
         port: db.sshPort,
         username: db.sshUser,
-        password: db.sshPass
+        password: db.sshPass,
+        readyTimeout: 99999,
+        debug: console.log
       }
     });
 
-    tunnel.connect(function (error, port) {
-      if (error) {
-        console.log('error', error);
-      }
-
-      console.log('port', port);
-
+    console.log('connecting...');
+    tunnel.connect(function (address) {
+      console.log('connected');
       var connection = mysql.createConnection({
         host: db.hostname,
         database: db.name,
         user: db.username,
         password: db.password,
-        port: port,
+        port: address.port,
         insecureAuth: true
       });
 
       connection.connect(function(err) {
         if (err) {
-          console.error('error connecting: ' + err.stack);
-          return;
+          defer.reject('error connecting: ' + err.stack);
         }
       });
 
-      connection.query('SELECT * FROM `breakfast-registrations`', function(err, rows) {
-        if (err) throw err;
-        rows.forEach(function(row) {
+      connection.query(sql, function(err, rows) {
+        if (err) defer.reject(err);
+        /*rows.forEach(function(row) {
           console.log(row.fname);
-        });
+        });*/
         connection.end(function() {
           console.log('ended mysql');
         });
-        console.log(this.server);
-        tunnel.close();
+        tunnel.close(function(error) {
+          console.log('close tunnel error:', error);
+        });
+        defer.resolve(rows);
       });
 
     });
+
+    return defer.promise;
   };
 
   return mongoose.model('Database', Database);

@@ -13,19 +13,14 @@ var config = {
 };
 
 var tunnel = new Tunnel(config);
-tunnel.connect(function (error, port) {
-    if (error) {
-      console.log(error);
-    }
-
-    console.log(port);
+tunnel.connect(function (address) {
 
     var connection = mysql.createConnection({
       host     : '127.0.0.1',
       database : 'mcwebadmin',
       user     : 'mcwebadmin',
       password : 'manresa1556',
-      port     : port,
+      port     : address.port,
       insecureAuth: true
     });
 
