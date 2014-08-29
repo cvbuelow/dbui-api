@@ -6,10 +6,7 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
     // Only return databases that user owns or has a role for
     User.getDatabaseAccessQuery(req.user).then(function(hasAccess) {
       return Database.find(hasAccess).exec()
-        .then(function(databases) {
-          // Attach role info to each database
-          res.send(databases);
-        });
+        .then(res.send.bind(res));
     }, next);
   });
 
@@ -37,7 +34,7 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
         .then(function(owner) {
           owner.roles.push(adminRole);
           owner.save(function(err) {
-            if (err) { next(err); }
+            if (err) next(err);
             res.send(201, { id: adminRole.database });
           });
         });
@@ -46,22 +43,40 @@ define(['express', 'database', 'role', 'user'], function(express, Database, Role
     req.body.owner = req.user._id;
     
     Database.create(req.body)
-      .then(createRoles)
-      .then(addAdminRoleToOwner, next);
+      .then( createRoles )
+      .then( addAdminRoleToOwner, next );
     
+  });
+
+  /* GET remote tables */
+  app.get('/databases/:id/remote-tables', function(req, res, next) {
+    var id = req.params.id;
+    
+    var getDatabase = function(hasAccess) {
+      return Database.findOne({ $and: [{ _id: id }, hasAccess]}).exec();
+    };
+    
+    var getRemoteTables = function(database) {
+      return database.query('SHOW TABLES');
+    };
+
+    User.getDatabaseAccessQuery(req.user, 'admin')
+      .then( getDatabase )
+      .then( getRemoteTables )
+      .then( res.send.bind(res), next );
   });
 
   /* GET single database */
   app.get('/databases/:id', function(req, res, next) {
-    // Only return databases that user owns or has a role for
-    // TODO: add or condition to check user roles
     var id = req.params.id;
-    User.getDatabaseAccessQuery(req.user, 'admin').then(function(hasAccess) {
-      return Database.findOne({ $and: [{ _id: id }, hasAccess]}).exec()
-        .then(function(database) {
-          res.send(database);
-        });
-    }, next);
+    
+    var getDatabase = function(hasAccess) {
+      return Database.findOne({ $and: [{ _id: id }, hasAccess]}).exec();
+    };
+    
+    User.getDatabaseAccessQuery(req.user, 'admin')
+      .then( getDatabase )
+      .then( res.send.bind(res), next );
   });
 
   /* Update Database */
