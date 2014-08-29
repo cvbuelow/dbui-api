@@ -1,5 +1,6 @@
-define(['mongoose', 'tunnel-ssh', 'mysql', 'q'], function(mongoose, Tunnel, mysql, q) {
+define(['events', 'mongoose', 'tunnel-ssh', 'mysql', 'q'], function(events, mongoose, Tunnel, mysql, q) {
 
+  var eventEmitter = new events.EventEmitter();
   var Schema = mongoose.Schema;
   var Database = new Schema({
     owner: { type: Schema.Types.ObjectId, ref: 'User' }, //person who pays for it
@@ -20,93 +21,63 @@ define(['mongoose', 'tunnel-ssh', 'mysql', 'q'], function(mongoose, Tunnel, mysq
     config: String
   });
 
-  Database.methods.test = function() {
-    return this.query('SHOW TABLES');
-  };
-
   Database.methods.connect = function() {
 
-    var db = this;
+    var db = this,
+        connection;
 
     var tunnel = new Tunnel({
-      remotePort: db.port,
-      verbose: true, // dump information to stdout
-      sshConfig: {
-        host: db.sshHost,
-        port: db.sshPort,
-        username: db.sshUser,
-        password: db.sshPass
-      }
-    });
+          remoteHost: db.hostname,
+          remotePort: db.port,
+          verbose: true, // dump information to stdout
+          sshConfig: {
+            host: db.sshHost,
+            port: db.sshPort,
+            username: db.sshUser,
+            password: db.sshPass
+          }
+        });
 
     var connectToMySQL = function (address) {
 
       var connection = mysql.createConnection({
-        host: db.hostname,
+        host: address.address,  //not sure this is right...might need to be db.hostname
         database: db.name,
         user: db.username,
         password: db.password,
         port: address.port,
         insecureAuth: true
       });
-
-      return q.nfcall(connection.connect);
+      return q.ninvoke(connection, 'connect');
     };
 
+    eventEmitter.on('close-tunnel', tunnel.close.bind(tunnel));
+
     return tunnel.connect()
-      .then(connectToMySQL)
-      .finally(tunnel.close);
+      .then(connectToMySQL);
+  };
+
+  Database.methods.disconnect = function() {
+    eventEmitter.emit('close-tunnel');
   };
   
   Database.methods.query = function(sql) {
-    var defer = q.defer();
+    
+    var queryMySQL = function() {
+      return q.ninvoke(connection, 'query', sql);
+      /*connection.query(sql, function(err, rows) {
+        if (err) defer.reject(err);
 
-    var db = this;
+        connection.end(function(err) {
+          console.log('ended mysql', err);
+        });
+        tunnel.close();
+        defer.resolve(rows);
+      });*/
+    };
 
-    var tunnel = new Tunnel({
-      remotePort: db.port,
-      verbose: true, // dump information to stdout
-      sshConfig: {
-        host: db.sshHost,
-        port: db.sshPort,
-        username: db.sshUser,
-        password: db.sshPass
-      }
-    });
-
-    tunnel.connect(function (address) {
-
-      var connection = mysql.createConnection({
-        host: db.hostname,
-        database: db.name,
-        user: db.username,
-        password: db.password,
-        port: address.port,
-        insecureAuth: true
-      });
-
-      connection.connect(function(err) {
-        console.log('err', err);
-        if (err) {
-          tunnel.close();
-          defer.reject(err);
-        } else {
-          connection.query(sql, function(err, rows) {
-            if (err) defer.reject(err);
-
-            connection.end(function(err) {
-              console.log('ended mysql', err);
-            });
-            tunnel.close();
-            defer.resolve(rows);
-          });
-        }
-      });
-
-
-    });
-
-    return defer.promise;
+    return this.connect()
+      .then(queryMySQL);
   };
 
   return mongoose.model('Database', Database);

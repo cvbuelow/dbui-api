@@ -1,5 +1,5 @@
-define(['express', 'express-session', 'morgan', 'cookie-parser', 'body-parser', 'mongoose', 'passport', 'passport-local', 'cors', 'user'],
-  function(express, session, logger, cookieParser, bodyParser, mongoose, passport, passportLocal, cors, User) {
+define(['express', 'domain', 'express-session', 'morgan', 'cookie-parser', 'body-parser', 'mongoose', 'passport', 'passport-local', 'cors', 'user'],
+  function(express, domain, session, logger, cookieParser, bodyParser, mongoose, passport, passportLocal, cors, User) {
     
     mongoose.connect('mongodb://localhost/dbui');
     var db = mongoose.connection;
@@ -8,6 +8,20 @@ define(['express', 'express-session', 'morgan', 'cookie-parser', 'body-parser', 
     });
 
     var app = express();
+
+    app.use(function(req, res, next) {
+      var reqDomain = domain.create();
+      reqDomain.add(req);
+      reqDomain.add(res);
+
+      res.on('close', function() {
+        reqDomain.dispose();
+      });
+      reqDomain.on('error', function(err) {
+        next(err);            
+      });
+      reqDomain.run(next);
+    });
 
     app.use(logger('dev'));
     app.use(bodyParser.json());
