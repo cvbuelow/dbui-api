@@ -51,7 +51,7 @@ define(['events', 'mongoose', 'tunnel-ssh', 'mysql', 'q'], function(events, mong
       return q.ninvoke(mysqlConnection, 'connect');
     };
 
-    eventEmitter.on('close-tunnel', tunnel.close.bind(tunnel));
+    // eventEmitter.on('close-tunnel', tunnel.close.bind(tunnel));
 
     return tunnel.connect()
       .then(connectToMySQL);

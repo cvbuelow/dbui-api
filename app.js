@@ -18,7 +18,7 @@ define(['express', 'domain', 'express-session', 'morgan', 'cookie-parser', 'body
         reqDomain.dispose();
       });
       reqDomain.on('error', function(err) {
-        next(err);            
+        next(err);
       });
       reqDomain.run(next);
     });
