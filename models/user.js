@@ -20,13 +20,9 @@ define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
       return next();
     }
     bcrypt.genSalt(10, function(err, salt) {
-      if (err) {
-        return next(err);
-      }
+      if (err) return next(err);
       bcrypt.hash(user.password, salt, function(err, hash) {
-        if (err) {
-          return next(err);
-        }
+        if (err) return next(err);
         user.password = hash;
         next();
       });
@@ -35,9 +31,7 @@ define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
 
   User.methods.comparePassword = function(candidatePassword, cb) {
     bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
-      if (err) {
-        return cb(err);
-      }
+      if (err) return cb(err);
       cb(null, isMatch);
     });
   };
@@ -54,7 +48,7 @@ define(['mongoose', 'bcryptjs'], function(mongoose, bcrypt) {
     return model.findById(user._id, 'roles').populate(roles).exec()
       .then(function(u) {
         return { $or: [
-          { owner: u._id }, 
+          { owner: u._id },
           { _id: { $in: u.roles.map(function(role) {
               return role.database;
             })}

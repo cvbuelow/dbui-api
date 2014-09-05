@@ -10,6 +10,7 @@ define(['express', 'database', 'table', 'user'], function(express, Database, Tab
 
   
   /* GET tables listing */
+  
   app.get('/databases/:id/tables', function(req, res, next) {
         
     var getTables = function(database) {
@@ -23,6 +24,7 @@ define(['express', 'database', 'table', 'user'], function(express, Database, Tab
 
   
   /* Create Table */
+  
   app.post('/databases/:id/tables', function(req, res, next) {
     
     var validateRemoteTable = function(database) {
@@ -49,6 +51,7 @@ define(['express', 'database', 'table', 'user'], function(express, Database, Tab
 
   
   /* GET single table */
+  
   app.get('/databases/:id/tables/:tableId', function(req, res, next) {
     
     var getTable = function(database) {
@@ -60,6 +63,41 @@ define(['express', 'database', 'table', 'user'], function(express, Database, Tab
     
     getDatabase(req, 'admin')
       .then(getTable)
+      .then(res.send.bind(res), next);
+  });
+
+
+  /* Update Table */
+  
+  app.put('/databases/:id/tables/:tableId', function(req, res, next) {
+    
+    var updateTable = function(database) {
+      return Table.findOneAndUpdate({
+        _id: req.params.tableId,
+        databaseId: database._id
+      }, req.body).exec();
+    };
+    
+    getDatabase(req, 'admin')
+      .then(updateTable)
+      .then(res.send.bind(res), next);
+  });
+
+
+  /* Delete Table */
+
+  app.delete('/databases/:id/tables/:tableId', function(req, res, next) {
+
+    var deleteTable = function(database) {
+      return Table.findOneAndRemove({
+        _id: req.params.tableId,
+        databaseId: database._id
+      }).exec();
+    };
+
+    getDatabase(req, 'admin')
+      .then(deleteTable)
+      // TODO: Remove fields, etc.
       .then(res.send.bind(res), next);
   });
 
