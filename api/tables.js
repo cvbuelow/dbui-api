@@ -1,13 +1,14 @@
 define(['express', 'database', 'table', 'user'], function(express, Database, Table, User) {
   var app = express();
   
-  var getDatabase = function(req) {
-    return User.getDatabaseAccessQuery(req.user)
+  var getDatabase = function(req, type) {
+    return User.getDatabaseAccessQuery(req.user, type)
       .then(function(hasAccess) {
         return Database.findOne({ $and: [{ _id: req.params.id }, hasAccess]}).exec();
       });
   };
 
+  
   /* GET tables listing */
   app.get('/databases/:id/tables', function(req, res, next) {
         
@@ -20,6 +21,7 @@ define(['express', 'database', 'table', 'user'], function(express, Database, Tab
       .then(res.send.bind(res), next);
   });
 
+  
   /* Create Table */
   app.post('/databases/:id/tables', function(req, res, next) {
     
@@ -39,9 +41,25 @@ define(['express', 'database', 'table', 'user'], function(express, Database, Tab
     // Ignore databaseId value in request since that hasn't been validated
     req.body.databaseId = req.params.id;
     
-    getDatabase(req)
+    getDatabase(req, 'admin')
       .then(validateRemoteTable)
       .then(createTable)
+      .then(res.send.bind(res), next);
+  });
+
+  
+  /* GET single table */
+  app.get('/databases/:id/tables/:tableId', function(req, res, next) {
+    
+    var getTable = function(database) {
+      return Table.findOne({
+        _id: req.params.tableId,
+        databaseId: database._id
+      }).exec();
+    };
+    
+    getDatabase(req, 'admin')
+      .then(getTable)
       .then(res.send.bind(res), next);
   });
 
